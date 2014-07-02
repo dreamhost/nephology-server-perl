@@ -11,6 +11,8 @@ use NephologyServer::DB;
 use NephologyServer::Validate;
 use Node;
 use Node::Manager;
+use LookupKey::Manager;
+use KeyParam::Manager;
 use MapCasteRule::Manager;
 
 
@@ -106,6 +108,41 @@ sub set_rule {
 			status => 403
 		);
 	}
+}
+
+sub info {
+	my $self = shift;
+	my $boot_mac = $self->stash("boot_mac");
+	my $key_name = $self->stash("key_name");
+	my $param_name = $self->stash("param_name");
+
+	my $Config = NephologyServer::Config::config($self);
+        my $Node = NephologyServer::Validate::validate($self, $boot_mac);
+
+        if($Node == '0') {
+                return $self->render(
+                        text => "Couldn't find $boot_mac",
+                        status => "404"
+                );
+        }
+
+	my $lookup_key_id = @{LookupKey::Manager->get_lookup_keys(
+                query => [
+				key_name => $key_name,
+			],
+        )}[0]->{id};
+
+	my $key_param_value = @{KeyParam::Manager->get_key_params(
+                query => [
+				key_id => $lookup_key_id,
+				param_name => $param_name,
+			],
+        )}[0]->{param_value};
+
+	return $self->render(
+		text => $key_param_value,
+		status => 200
+	);
 }
 
 sub install_machine {

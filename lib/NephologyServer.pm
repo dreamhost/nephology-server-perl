@@ -48,6 +48,12 @@ sub startup {
 		action 	   => 'discovery',
 	);
 
+	# Info
+	$r->get('/info/:boot_mac/:key_name/:param_name')->to(
+		controller => 'install',
+		action     => 'info',
+	);
+
         $self->plugin(Mount => {'/webui' => 'bin/nephology-webui'});
 }
 
