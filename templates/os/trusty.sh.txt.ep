@@ -1,0 +1,216 @@
+#!/bin/bash
+
+failed()
+{
+  sleep 2 # Wait for the kernel to stop whining
+  echo "Hrm, that didn't work.  Calling for help."
+  if [ -e /dev/ipmi0 ]; then sudo ipmitool chassis identify force; fi
+  echo "OS Install failed: ${1}"
+  while [ 1 ]; do sleep 10; done
+  exit 1;
+}
+
+mkdir /target
+mount /dev/sda1 /target -t xfs
+mkdir /target/var /target/tmp /target/var/tmp
+mount /dev/sda5 /target/tmp -t xfs
+mount /dev/sda6 /target/var/tmp -t xfs
+mount /dev/sda7 /target/var -t xfs
+
+echo "Starting debootstrap"
+sudo debootstrap --arch=amd64 precise /target http://<%= $mirror_addr %>/ubuntu/ || failed "Unable to debootstrap"
+# Untar the Ubuntu Minimal image from the server
+#echo "Extracting root filesystem..."
+#curl http://<%= $srv_addr %>/install-images/ubuntu-12.04.1-minimal.txz | tar Jxps -C /target
+#echo "done!"
+mount -o bind /proc /target/proc
+mount -o bind /dev /target/dev
+mount -o bind /sys /target/sys
+mount -o bind /dev/pts /target/dev/pts
+
+# Add fstab
+if [ -e /tmp/target-fstab ]; then
+cp /tmp/target-fstab /target/etc/fstab
+else
+cat > /target/etc/fstab <<EOF
+# /etc/fstab: static file system information.
+#
+# Use 'blkid -o value -s UUID' to print the universally unique identifier
+# for a device; this may be used with UUID= as a more robust way to name
+# devices that works even if disks are added and removed. See fstab(5).
+#
+# <file system> <mount point>   <type>  <options>                               <dump>  <pass>
+proc            /proc           proc    nodev,noexec,nosuid                     0       0
+/dev/sda1       /               xfs     defaults,noatime                        0       1
+/dev/sda2       swap            swap    defaults                                0       0
+/dev/sda5       /tmp            xfs     defaults,noatime,nodev,nosuid,noexec    0       1
+/dev/sda6       /var/tmp        xfs     defaults,noatime,nodev,nosuid           0       1
+/dev/sda7       /var        xfs     defaults,noatime,nodev,nosuid           0       1
+EOF
+fi
+
+# Set the hostname
+echo "Setup hostname and DNS..."
+#echo <%= $db_node_info->{'hostname'} %> > /target/etc/hostname
+if [ -L /target/etc/resolv.conf ]; then rm /target/etc/resolv.conf; fi
+printf "domain <%= $db_node_info->{'domain'} %>\nsearch <%= $db_node_info->{'domain'} %>\nnameserver 8.8.8.8\nnameserver 8.8.4.4\n" > /target/etc/resolv.conf            
+printf "<%= $db_node_info->{'primary_ip'} %> <%= $db_node_info->{'hostname'} %>.<%= $db_node_info->{'domain'} %> <%= $db_node_info->{'hostname'} %>\n" >> /target/etc/hosts
+echo "Done!"
+
+# Setup Ubuntu repos
+echo "Installing sources.list"
+cat > /target/etc/apt/sources.list <<EOF
+deb http://<%= $mirror_addr %>/ubuntu precise main universe restricted
+EOF
+
+cat > /target/etc/network/interfaces <<EOF
+auto eth0
+iface eth0 inet dhcp
+EOF
+
+# Add selection files
+cat > /target/tmp/ubuntu-12.04-minimal.debconf <<EOF
+tzdata  tzdata/Zones/Australia  select  
+adduser adduser/homedir-permission      boolean true
+irqbalance      irqbalance/oneshot      boolean false
+ucf     ucf/changeprompt        select  keep_current
+tzdata  tzdata/Zones/US select  
+tasksel tasksel/terminal        terminal        
+grub-pc grub-pc/kopt_extracted  boolean false
+grub-pc grub2/kfreebsd_cmdline  string  
+libpam-runtime  libpam-runtime/override boolean false
+grub-pc grub2/device_map_regenerated    note    
+ufw     ufw/existing_configuration      error   
+libpam0g:amd64  libpam0g/restart-services       string  
+resolvconf      resolvconf/downup-interfaces    note    
+tzdata  tzdata/Zones/Asia       select  
+libpam-runtime  libpam-runtime/profiles multiselect     unix
+console-setup   console-setup/codeset47 select  . Combined - Latin; Slavic Cyrillic; Greek
+resolvconf      resolvconf/linkify-resolvconf   boolean false
+tzdata  tzdata/Zones/Etc        select  UTC
+tasksel tasksel/first   multiselect     OpenSSH server
+sysv-rc sysv-rc/unable-to-convert       note    
+debconf debconf/frontend        select  Dialog
+ca-certificates ca-certificates/new_crts        multiselect
+tzdata  tzdata/Zones/SystemV    select  
+sysv-rc sysv-rc/convert-legacy  boolean true
+openssh-server  ssh/use_old_init_script boolean true
+keyboard-configuration  keyboard-configuration/modelcode        string  pc105
+ucf     ucf/conflicts_found     error
+keyboard-configuration  keyboard-configuration/unsupported_config_options       boolean true
+grub-pc grub-pc/install_devices multiselect     /dev/sda
+console-setup   console-setup/fontface47        select  Terminus
+openssh-server  ssh/vulnerable_host_keys        note
+keyboard-configuration  keyboard-configuration/unsupported_config_layout        boolean true
+memtest86+      shared/memtest86-run-lilo       boolean false
+ufw     ufw/allow_custom_ports  string
+keyboard-configuration  keyboard-configuration/toggle   select  No toggling
+grub-pc grub-pc/postrm_purge_boot_grub  boolean false
+console-setup   console-setup/fontsize-text47   select  16
+popularity-contest      popularity-contest/submiturls   string
+keyboard-configuration  keyboard-configuration/compose  select  No compose key
+tzdata  tzdata/Zones/Arctic     select  
+keyboard-configuration  keyboard-configuration/layout   select  English (US)
+ntfs-3g ntfs-3g/setuid-root     boolean false
+keyboard-configuration  keyboard-configuration/xkb-keymap       select  us
+irqbalance      irqbalance/enable       boolean true
+keyboard-configuration  keyboard-configuration/variant  select  English (US)
+tasksel tasksel/tasks   multiselect
+tzdata  tzdata/Zones/Pacific    select  
+keyboard-configuration  keyboard-configuration/switch   select  No temporary switch
+grub-pc grub-pc/install_devices_failed_upgrade  boolean true
+console-setup   console-setup/charmap47 select  UTF-8
+openssh-server  ssh/encrypted_host_key_but_no_keygen    note
+popularity-contest      popularity-contest/participate  boolean false
+tzdata  tzdata/Zones/Antarctica select  
+keyboard-configuration  keyboard-configuration/unsupported_options      boolean true
+libc6   glibc/upgrade   boolean true
+libc6:amd64     glibc/upgrade   boolean true
+grub-pc grub2/linux_cmdline     string
+oem-config      oem-config/steps        multiselect     language, timezone, keyboard, user, network, tasks
+debconf debconf/priority        select  high
+keyboard-configuration  console-setup/detect    detect-keyboard
+keyboard-configuration  console-setup/detected  note
+landscape-common        landscape-common/sysinfo        select  Cache sysinfo in /etc/motd
+man-db  man-db/auto-update      boolean true
+keyboard-configuration  keyboard-configuration/altgr    select  The default for the keyboard layout
+grub-pc grub-pc/install_devices_empty   boolean false
+libpam-runtime  libpam-runtime/conflicts        error
+resolvconf      resolvconf/link-tail-to-original        boolean false
+tzdata  tzdata/Zones/Europe     select  
+keyboard-configuration  keyboard-configuration/ctrl_alt_bksp    boolean false
+libc6   glibc/restart-services  string
+libc6:amd64     glibc/restart-services  string
+libc6   libraries/restart-without-asking        boolean false
+libc6:amd64     libraries/restart-without-asking        boolean false
+libpam0g:amd64  libraries/restart-without-asking        boolean false
+grub-pc grub2/kfreebsd_cmdline_default  string  quiet
+ufw     ufw/enable      boolean false
+console-setup   console-setup/codesetcode       string  Uni2
+libc6   glibc/disable-screensaver       error
+libc6:amd64     glibc/disable-screensaver       error
+libssl1.0.0:amd64       libssl1.0.0/restart-failed      error
+resolvconf      resolvconf/reboot-recommended-after-removal     note
+tzdata  tzdata/Zones/Africa     select  
+d-i     debian-installer/language       string  en
+grub-pc grub-pc/install_devices_failed  boolean false
+keyboard-configuration  keyboard-configuration/unsupported_layout       boolean true
+tzdata  tzdata/Zones/America    select  
+keyboard-configuration  keyboard-configuration/variantcode      string
+ca-certificates ca-certificates/trust_new_crts  select  yes
+keyboard-configuration  keyboard-configuration/model    select  Generic 105-key (Intl) PC
+libpam0g:amd64  libpam0g/xdm-needs-restart      error
+man-db  man-db/install-setuid   boolean false
+libc6   glibc/restart-failed    error
+libc6:amd64     glibc/restart-failed    error
+keyboard-configuration  console-setup/ask_detect        boolean false
+ucf     ucf/show_diff   note
+dash    dash/sh boolean true
+d-i     debian-installer/country        string  US
+keyboard-configuration  keyboard-configuration/layoutcode       string  us
+apparmor        apparmor/homedirs       string
+grub-pc grub-pc/install_devices_disks_changed   multiselect
+grub-pc grub2/linux_cmdline_default     string
+libpam0g:amd64  libpam0g/restart-failed error
+libssl1.0.0:amd64       libssl1.0.0/restart-services    string
+openssh-server  ssh/disable_cr_auth     boolean false
+grub-pc grub-pc/chainload_from_menu.lst boolean true
+tzdata  tzdata/Areas    select  Etc
+console-setup   console-setup/store_defaults_in_debconf_db      boolean true
+byobu   byobu/launch-by-default boolean false
+grub-pc grub-pc/hidden_timeout  boolean true
+tasksel tasksel/force-tasks     string  server
+console-setup   console-setup/fontsize-fb47     select  16
+keyboard-configuration  keyboard-configuration/store_defaults_in_debconf_db     boolean true
+tzdata  tzdata/Zones/Atlantic   select  
+tasksel tasksel/desktop multiselect     gnome
+grub-pc grub-pc/mixed_legacy_and_grub2  boolean true
+ntfs-3g ntfs-3g/initramfs       boolean true
+ucf     ucf/changeprompt_threeway       select  keep_current
+ufw     ufw/allow_known_ports   multiselect
+libpam-modules  libpam-modules/disable-screensaver      error
+keyboard-configuration  keyboard-configuration/optionscode      string
+grub-pc grub-pc/timeout string  10
+console-setup   console-setup/fontsize  string  16
+libpam-runtime  libpam-runtime/no_profiles_chosen       error
+tzdata  tzdata/Zones/Indian     select  
+tasksel tasksel/limit-tasks     string
+EOF
+
+cat > /target/tmp/install.sh <<EOF
+hostname <%= $db_node_info->{'hostname'} %>
+export DEBIAN_FRONTEND=noninteractive
+debconf-set-selections /tmp/ubuntu-12.04-minimal.debconf
+debconf-set-selections /tmp/dcs
+apt-get update
+apt-get -fy upgrade
+apt-get -fy install openssh-server vim sudo xfsprogs wget ifenslave curl
+apt-get install -fy linux-image grub-pc 
+grep -v rootfs /proc/mounts > /etc/mtab
+cp /tmp/grub-defaults /etc/default/grub
+update-grub
+grub-install '(hd0)'
+EOF
+
+echo "running install.sh"
+chroot /target /bin/bash /tmp/install.sh

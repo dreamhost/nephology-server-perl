@@ -34,6 +34,12 @@ sleep 1
 echo "Creating var volume"
 sudo parted -s -acylinder /dev/sda mkpart logical 35017 45497 || failed "mkpart sda7"
 sleep 1
-echo "Creating home volume"
-sudo parted -s -acylinder /dev/sda mkpart logical 45497 100% || failed "mkpart sda8"
-sleep 1
+
+echo "Creating root volume"
+sudo mkfs.xfs -f -d su=64k,sw=1 /dev/sda1 || failed "mkfs.xfs sda1"
+echo "Creating tmp volume"
+sudo mkfs.xfs -f -d su=64k,sw=1 /dev/sda5 || failed "mkfs.xfs sda5"
+echo "Creating vartmp volume"
+sudo mkfs.xfs -f -d su=64k,sw=1 /dev/sda6 || failed "mkfs.xfs sda6"
+echo "Creating var volume"
+sudo mkfs.xfs -f -d su=64k,sw=1 /dev/sda7 || failed "mkfs.xfs sda7"

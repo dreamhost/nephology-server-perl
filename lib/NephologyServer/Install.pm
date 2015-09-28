@@ -213,7 +213,7 @@ sub discovery {
 		ipmi_user => '',
 		ipmi_password => '',
 		caste_id => '0',
-		status_id => '0',
+		status_id => '1',
 		domain => '',
 		primary_ip => '',
 		hostname => '',
