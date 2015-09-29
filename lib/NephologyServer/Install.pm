@@ -56,7 +56,7 @@ sub set_rule {
 				template => $CasteRule->template,
 				format   => 'txt'
 			);
-		} elsif ($CastRule->url) {
+		} elsif ($CasteRule->url) {
 			$self->redirect_to("http://" . $Config->{'server_addr'} . $CasteRule->url);
 		} else {
 			return $self->render(
