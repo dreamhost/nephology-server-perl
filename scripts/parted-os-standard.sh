@@ -4,24 +4,24 @@ failed()
 {
   sleep 2 # Wait for the kernel to stop whining
   echo "Hrm, that didn't work.  Calling for help."
-  if [ -e /dev/ipmi0 ]; then
-     sudo ipmitool chassis identify force
-  fi
-  echo "OS Install failed: ${1}"
+  sudo ipmitool chassis identify force
+  echo "OS partitioning failed: ${1}"
+  while [ 1 ]; do sleep 10; done
   exit 1;
 }
 
+echo "Removing existing paritions on /dev/sda"
 for v_partition in $(sudo parted -s /dev/sda print | egrep 'primary|extended' | awk '/^ / {print $1}')
 do
-        sudo parted -s /dev/sda rm ${v_partition}
+  echo "Removing ${v_partition}"
+  sudo parted -s /dev/sda rm ${v_partition}
 done
-
 
 echo "Making msdos label on sda"
 sudo parted -s -acylinder /dev/sda mklabel msdos || failed "mklabel sda"
 sleep 2
 echo "Creating root volume"
-sudo parted -s -acylinder /dev/sda mkpart primary 201 10441 || failed "mkpart sda1"
+sudo parted -s -acylinder /dev/sda mkpart primary 1 10441 || failed "mkpart sda1"
 sleep 2
 echo "Creating swap volume"
 sudo parted -s -acylinder /dev/sda mkpart primary 10441 18633 || failed "mkpart sda2"
