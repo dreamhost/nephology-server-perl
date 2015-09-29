@@ -55,9 +55,7 @@ CREATE TABLE `caste_rule` (
   `description` varchar(200) NOT NULL,
   `url` varchar(200) NOT NULL,
   `template` varchar(200) NOT NULL,
-  `type_id` int(11) NOT NULL,
   UNIQUE KEY `id` (`id`),
-  KEY `caste_id` (`type_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -67,7 +65,7 @@ CREATE TABLE `caste_rule` (
 
 LOCK TABLES `caste_rule` WRITE;
 /*!40000 ALTER TABLE `caste_rule` DISABLE KEYS */;
-INSERT INTO `caste_rule` VALUES (10,'2015-09-28 21:41:30','2015-09-28 21:41:30','Partition OS disk w/standard layout','/scripts/parted-os-standard.sh','',1),(20,'2015-09-28 21:42:39','2015-09-28 21:42:39','Bootstrap with Ubuntu 14.04','','os/trusty.sh',4),(9999,'2015-09-28 21:38:46','2015-09-28 21:38:46','Reboot','','os/reboot.sh',2);
+INSERT INTO `caste_rule` VALUES (10,'2015-09-28 21:41:30','2015-09-28 21:41:30','Partition OS disk w/standard layout','/scripts/parted-os-standard.sh',''),(20,'2015-09-28 21:42:39','2015-09-28 21:42:39','Bootstrap with Ubuntu 14.04','','os/trusty.sh'),(9999,'2015-09-28 21:38:46','2015-09-28 21:38:46','Reboot','','os/reboot.sh');
 /*!40000 ALTER TABLE `caste_rule` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -160,32 +158,6 @@ LOCK TABLES `node_status` WRITE;
 /*!40000 ALTER TABLE `node_status` DISABLE KEYS */;
 INSERT INTO `node_status` VALUES ('2015-09-28 21:34:54','2015-09-28 21:34:54',1,'bootstrap.ipxe',1000),('2015-09-28 21:35:08','2015-09-28 21:35:08',1000,'localboot.ipxe',NULL),('2015-09-28 21:35:58','2015-09-28 21:35:58',2000,'rescue.ipxe',NULL);
 /*!40000 ALTER TABLE `node_status` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ref_caste_rule_type`
---
-
-DROP TABLE IF EXISTS `ref_caste_rule_type`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `ref_caste_rule_type` (
-  `id` int(11) NOT NULL,
-  `ctime` datetime NOT NULL,
-  `mtime` datetime NOT NULL,
-  `description` varchar(200) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ref_caste_rule_type`
---
-
-LOCK TABLES `ref_caste_rule_type` WRITE;
-/*!40000 ALTER TABLE `ref_caste_rule_type` DISABLE KEYS */;
-INSERT INTO `ref_caste_rule_type` VALUES (1,'2015-09-28 21:39:06','2015-09-28 21:39:06','bash script'),(2,'2015-09-28 21:39:11','2015-09-28 21:39:11','reboot'),(3,'2015-09-28 21:39:29','2015-09-28 21:39:29','perl script'),(4,'2015-09-28 21:39:43','2015-09-28 21:39:43','bash script run as root');
-/*!40000 ALTER TABLE `ref_caste_rule_type` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
