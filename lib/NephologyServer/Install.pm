@@ -16,9 +16,6 @@ use KeyParam::Manager;
 use MapCasteRule::Manager;
 
 
-my @salt = ( '.', '/', 0 .. 9, 'A' .. 'Z', 'a' .. 'z' );
-
-
 sub set_rule {
 	my $self = shift;
 	my $boot_mac = $self->stash("boot_mac");
@@ -37,7 +34,16 @@ sub set_rule {
 
 	$self->stash("srv_addr" => $Config->{'server_addr'});
 	$self->stash("mirror_addr" => $Config->{'mirror_addr'});
-	$Node->admin_password(crypt($Node->{'admin_password'}, _gen_salt(2)));
+
+    my $pub_key;
+    open(my $fh, '<', $Config->{'pub_ssh_key_file'}) or die "cannot open file $Config->{'pub_ssh_key_file'}";
+    {
+        local $/;
+        $pub_key = <$fh>;
+    }
+    close($fh);
+
+	$self->stash("pub_ssh_key" => $pub_key);
 	# Make sure the requested rule is mapped to this machine before returning it
 
 
@@ -59,7 +65,7 @@ sub set_rule {
 				format   => 'txt'
 			);
 		} elsif ($CasteRule->url) {
-			$self->redirect_to("http://" . $Config->{'server_addr'} . $CasteRule->url);
+			$self->redirect_to($CasteRule->url);
 		} else {
 			return $self->render(
 				text   => "No template or url defined",
@@ -172,10 +178,6 @@ sub discovery {
 		ctime => time,
 		mtime => time,
 		asset_tag => '',
-		admin_user =>  '',
-		admin_password => '',
-		ipmi_user => '',
-		ipmi_password => '',
 		caste_id => '0',
 		status_id => '1',
 		domain => '',
@@ -192,18 +194,6 @@ sub discovery {
         };
 
         $self->render(json => $install_list);
-}
-
-# uses global @salt to construct salt string of requested length
-sub _gen_salt {
-	my $count = shift;
-
-	my $salt;
-	for (1..$count) {
-		$salt .= (@salt)[rand @salt];
-	}
-
-	return $salt;
 }
 
 1;

@@ -30,12 +30,6 @@ sub startup {
 		action     => 'install_machine',
 	);
 
-	# Creds
-	$r->get('/creds/:boot_mac')->to(
-		controller => 'creds',
-		action     => 'machine_creds',
-	);
-
 	# Notify
 	$r->post('/notify/:boot_mac')->to(
 		controller => 'notify',

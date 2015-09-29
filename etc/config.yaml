@@ -2,6 +2,7 @@ server_addr: 127.0.0.1
 # server_addr is the IP/hostname of the HTTP server running nephology
 # mirror_addr is the IP/hostname of an HTTP server with an ubuntu mirror
 mirror_addr: 127.0.0.1
+pub_ssh_key_file: /etc/nephology/nephology.ssh.pub
 db_name: nephology2
 db_username: nephology
 db_password: 

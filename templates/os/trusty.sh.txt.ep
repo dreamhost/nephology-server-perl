@@ -86,5 +86,13 @@ EOF
 echo "running install.sh"
 chroot /target /bin/bash /tmp/install.sh
 
+echo "Setup ssh key"
+if [ ! -d "/target/root/.ssh" ]; then
+        mkdir /target/root/.ssh
+fi
+cat > /target/root/.ssh/authorized_keys <<EOF
+<%= $pub_ssh_key %>
+EOF
+
 # remove apt proxy
 rm /target/etc/apt/apt.conf.d/99proxy.conf
