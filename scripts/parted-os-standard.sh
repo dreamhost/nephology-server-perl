@@ -4,11 +4,17 @@ failed()
 {
   sleep 2 # Wait for the kernel to stop whining
   echo "Hrm, that didn't work.  Calling for help."
-  sudo ipmitool chassis identify force
-  echo "OS partitioning failed: ${1}"
-  while [ 1 ]; do sleep 10; done
+  if [ -e /dev/ipmi0 ]; then
+     sudo ipmitool chassis identify force
+  fi
+  echo "OS Install failed: ${1}"
   exit 1;
 }
+
+for v_partition in $(sudo parted -s /dev/sda print | egrep 'primary|extended' | awk '/^ / {print $1}')
+do
+        sudo parted -s /dev/sda rm ${v_partition}
+done
 
 
 echo "Making msdos label on sda"
