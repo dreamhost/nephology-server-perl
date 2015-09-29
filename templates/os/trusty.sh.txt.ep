@@ -80,7 +80,7 @@ apt-get -fy upgrade
 grep -v rootfs /proc/mounts > /etc/mtab
 sudo locale-gen en_US.UTF-8
 update-grub
-grub-install '(hd0)'
+grub-install /dev/sda
 EOF
 
 echo "running install.sh"
