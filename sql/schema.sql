@@ -67,7 +67,7 @@ CREATE TABLE `caste_rule` (
 
 LOCK TABLES `caste_rule` WRITE;
 /*!40000 ALTER TABLE `caste_rule` DISABLE KEYS */;
-INSERT INTO `caste_rule` VALUES (10,'2015-09-28 21:41:30','2015-09-28 21:41:30','Partition OS disk w/standard layout','/scripts/parted-os-standard.sh','',1),(20,'2015-09-28 21:42:39','2015-09-28 21:42:39','Bootstrap with Ubuntu 14.04','','os/trusty.sh',4),(9999,'2015-09-28 21:38:46','2015-09-28 21:38:46','Reboot','/scripts/reboot.sh','',2);
+INSERT INTO `caste_rule` VALUES (10,'2015-09-28 21:41:30','2015-09-28 21:41:30','Partition OS disk w/standard layout','/scripts/parted-os-standard.sh','',1),(20,'2015-09-28 21:42:39','2015-09-28 21:42:39','Bootstrap with Ubuntu 14.04','','os/trusty.sh',4),(9999,'2015-09-28 21:38:46','2015-09-28 21:38:46','Reboot','','os/reboot.sh',2);
 /*!40000 ALTER TABLE `caste_rule` ENABLE KEYS */;
 UNLOCK TABLES;
 
