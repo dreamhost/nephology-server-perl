@@ -40,26 +40,6 @@ __PACKAGE__->meta->setup
 			length   => '20',
 			not_null => 1,
 		},
-		admin_user => {
-			type     => 'varchar',
-			length   => '20',
-			not_null => 1,
-		},
-		admin_password => {
-			type     => 'varchar',
-			length   => '100',
-			not_null => 1,
-		},
-		ipmi_user => {
-			type     => 'varchar',
-			length   => '20',
-			not_null => 1,
-		},
-		ipmi_password => {
-			type     => 'varchar',
-			length   => '100',
-			not_null => 1,
-		},
 		caste_id => {
 			type     => 'int',
 			length   => 11,
