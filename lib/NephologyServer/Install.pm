@@ -52,6 +52,8 @@ sub set_rule {
 	my $CasteRule = @$MapCasteRules[0]->caste_rule;
 	if (ref $CasteRule) {
 		if ($CasteRule->template) {
+            $self->stash("db_rule_info" => $CasteRule);
+            $self->stash("db_node_info" => $Node);
 			return $self->render(
 				template => $CasteRule->template,
 				format   => 'txt'
