@@ -1,8 +1,5 @@
 #!ipxe
 echo Nephology: Proceeding to Local Boot
 
-# use sanboot for ipxe/virtualbox, exit results in
-# INT18: BOOT FAILURE
-#sanboot --no-describe --drive 0x80
-
-exit
+# use sanboot to boot first drive
+sanboot --no-describe --drive 0x80
