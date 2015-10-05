@@ -162,19 +162,19 @@ sub discovery {
 	
 	unless($Config->{'discovery'} eq 'enable') {
 		return $self->render(
-                        text   => "Discovery mode is not enabled",
-                        status => 403
-                );
+						text   => "Discovery mode is not enabled",
+						status => 403
+		);
 	}
 
-    my $Node = NephologyServer::Validate::validate($self,$boot_mac);
+	my $Node = NephologyServer::Validate::validate($self,$boot_mac);
 
-    if ($Node) {
-        return $self->render(
-                        text => "$boot_mac already discovered",
-                        status => 409
-               );
-    }
+	if ($Node) {
+		return $self->render(
+						text => "$boot_mac already discovered",
+						status => 409
+		);
+	}
 
 	my $json = $self->req->body;
 	my $ohai = decode_json($json);
