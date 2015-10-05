@@ -60,6 +60,7 @@ echo "Done!"
 echo "Installing sources.list"
 cat > /target/etc/apt/sources.list <<EOF
 deb http://<%= $mirror_addr %>/ubuntu trusty main universe restricted
+deb http://<%= $mirror_addr %>/ubuntu trusty-security main universe restricted
 EOF
 
 # temporary, install.sh removes
