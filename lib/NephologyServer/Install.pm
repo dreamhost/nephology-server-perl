@@ -179,7 +179,7 @@ sub discovery {
 		mtime => time,
 		asset_tag => '',
 		caste_id => '0',
-		status_id => '1',
+		status_id => '1000',
 		domain => '',
 		primary_ip => '',
 		hostname => '',
