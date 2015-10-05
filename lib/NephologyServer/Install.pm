@@ -167,6 +167,15 @@ sub discovery {
                 );
 	}
 
+    my $Node = NephologyServer::Validate::validate($self,$boot_mac);
+
+    if ($Node) {
+        return $self->render(
+                        text => "$boot_mac already discovered",
+                        status => 409
+               );
+    }
+
 	my $json = $self->req->body;
 	my $ohai = decode_json($json);
 
