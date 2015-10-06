@@ -41,8 +41,6 @@ sub startup {
 		controller => 'install',
 		action     => 'info',
 	);
-
-        $self->plugin(Mount => {'/webui' => 'bin/nephology-webui'});
 }
 
 1;
