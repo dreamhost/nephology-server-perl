@@ -10,7 +10,7 @@ sub startup {
 	my $r = $self->routes;
 
 	$r->get('/')->to(
-		controller => 'example',
+		controller => 'main',
 		action     => 'welcome',
         );
 
