@@ -30,12 +30,6 @@ sub startup {
 		action     => 'install_machine',
 	);
 
-	# Notify
-	$r->post('/notify/:boot_mac')->to(
-		controller => 'notify',
-		action     => 'notify',
-	);
-
 	# Discovery
 	$r->post('/install/:boot_mac')->to(
 		controller => 'install',
@@ -47,8 +41,6 @@ sub startup {
 		controller => 'install',
 		action     => 'info',
 	);
-
-        $self->plugin(Mount => {'/webui' => 'bin/nephology-webui'});
 }
 
 1;
