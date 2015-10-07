@@ -5,5 +5,7 @@ use Mojo::Base 'Mojolicious::Controller';
 
 sub welcome {
 	my $self = shift;
-	return $self->redirect_to('/index.html');
+    return 1;
 }
+
+1;
