@@ -3,6 +3,7 @@ package Node;
 use strict;
 use Rose::DB::Object;
 use NephologyServer::DB;
+use NodeStatus::Manager;
 
 our @ISA = qw(Rose::DB::Object);
 
@@ -74,3 +75,9 @@ __PACKAGE__->meta->setup
 
 
 sub init_db { NephologyServer::DB->new }
+
+sub status {
+	my $self = shift;
+	my $NodeStatus = NodeStatus->new('status_id' => $self->status_id);
+	return $NodeStatus->load;
+}
