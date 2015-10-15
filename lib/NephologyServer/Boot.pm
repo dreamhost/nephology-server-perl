@@ -15,11 +15,13 @@ sub lookup_machine {
 
 	my $Config = NephologyServer::Config::config($self);
 	my $Node = NephologyServer::Validate::validate($self,$boot_mac);
-	my $NodeStatus = NodeStatus->new(status_id => $Config->{'default_node_status'});
-	$NodeStatus->load;
+	my $NodeStatus;
 
 	if ( $Node ) {
 		$NodeStatus = $Node->status;
+	} else {
+	    $NodeStatus = NodeStatus->new(status_id => $Config->{'discovery_node_status'});
+		$NodeStatus->load;
 	}
 
     # stash before we render

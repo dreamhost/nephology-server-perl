@@ -15,17 +15,23 @@ if [ -b "/dev/vda" ]; then
   BOOT_DISK="vda"
 fi
 
+IP="<%= $db_node_info->{'primary_ip'} %>"
+DOMAIN="<%= $domain %>"
+
+echo "Setup hostname and DNS..."
+<% if (stash->{'db_node_info'}->{'hostname'}) { %>
+HOSTNAME=<%= $db_node_info->{'hostname'} %>
+<% } else { %>
+HOSTNAME=$(echo  <%= $db_node_info->{'boot_mac'} %> |sed 's/:/-/g')
+<% } %>
+
+
 mkdir /target
 mount /dev/${BOOT_DISK}1 /target -t xfs
 mkdir /target/var /target/tmp /target/var/tmp
 mount /dev/${BOOT_DISK}5 /target/tmp -t xfs
 mount /dev/${BOOT_DISK}6 /target/var/tmp -t xfs
 mount /dev/${BOOT_DISK}7 /target/var -t xfs
-
-cat > /etc/resolv.conf <<EOF
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-EOF
 
 echo "Starting debootstrap"
 INCLUDE_PACKAGES="openssh-server,linux-image-generic,xfsprogs,wget,ifenslave,curl,grub-pc"
@@ -55,26 +61,23 @@ EOF
 
 # Set the hostname
 echo "Setup hostname and DNS..."
-<% if (stash->{'db_node_info'}->{'hostname'}) { %>
-echo <%= $db_node_info->{'hostname'} %> > /target/etc/hostname
-<% } else { %>
-echo <%= $db_node_info->{'boot_mac'} %> > /target/etc/hostname
-sed -i 's/:/-/g' /etc/hostname
-<% } %>
-
-if [ -L /target/etc/resolv.conf ]; then rm /target/etc/resolv.conf; fi
+cat > /target/etc/hostname << EOF
+$HOSTNAME
+EOF
 
 cat > /target/etc/hosts <<EOF
 127.0.0.1       localhost
 ::1     localhost ip6-localhost ip6-loopback
 ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
-<%= $db_node_info->{'primary_ip'} %>  <%= $db_node_info->{'hostname'} %>.<%= $db_node_info->{'domain'} %>  <%= $db_node_info->{'hostname'} %>
+$IP $HOSTNAME.$DOMAIN $HOSTNAME
+
 EOF
 
+if [ -L /target/etc/resolv.conf ]; then rm /target/etc/resolv.conf; fi
 cat > /etc/resolv.conf <<EOF
-search <%= $db_node_info->{'domain'} %>
-nameserver 8.8.8.8
+search $DOMAIN
+nameserver <%= $dns_server %>
 EOF
 
 # Setup Ubuntu repos
@@ -100,9 +103,6 @@ passwd -d root
 useradd -m bootstrap -d /home/bootstrap -s /bin/bash -G sudo
 mkdir /home/bootstrap/.ssh
 sed -i '/\%sudo/c\%sudo\tALL=(ALL) NOPASSWD:ALL' /etc/sudoers
-
-# set hostname
-hostname <%= $db_node_info->{'hostname'} %>
 
 # upgrade packages
 export DEBIAN_FRONTEND=noninteractive
