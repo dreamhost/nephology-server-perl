@@ -10,42 +10,47 @@ failed()
   exit 1;
 }
 
-echo "Removing existing paritions on /dev/sda"
-for v_partition in $(sudo parted -s /dev/sda print | egrep 'primary|extended' | awk '/^ / {print $1}')
+BOOT_DISK="sda"
+if [ -b "/dev/vda" ]; then
+  BOOT_DISK="vda"
+fi
+
+echo "Removing existing paritions on /dev/$BOOT_DISK"
+for v_partition in $(sudo parted -s /dev/$BOOT_DISK print | egrep 'primary|extended' | awk '/^ / {print $1}')
 do
   echo "Removing ${v_partition}"
-  sudo parted -s /dev/sda rm ${v_partition}
+  sudo parted -s /dev/$BOOT_DISK rm ${v_partition}
 done
 
-echo "Making msdos label on sda"
-sudo parted -s -acylinder /dev/sda mklabel msdos || failed "mklabel sda"
+echo "Making msdos label on $BOOT_DISK"
+sudo parted -s -acylinder /dev/$BOOT_DISK mklabel msdos || failed "mklabel $BOOT_DISK"
 sleep 2
 echo "Creating root volume"
-sudo parted -s -acylinder /dev/sda mkpart primary 1 10441 || failed "mkpart sda1"
+sudo parted -s -acylinder /dev/$BOOT_DISK mkpart primary 1 10441 || failed "mkpart $BOOT_DISK1"
 sleep 2
 echo "Creating swap volume"
-sudo parted -s -acylinder /dev/sda mkpart primary 10441 18633 || failed "mkpart sda2"
+sudo parted -s -acylinder /dev/$BOOT_DISK mkpart primary 10441 18633 || failed "mkpart $BOOT_DISK2"
 sleep 1
-sudo mkswap /dev/sda2 || failed "mkswap sda2"
+sudo mkswap /dev/${BOOT_DISK}2 || failed "mkswap ${BOOT_DISK}2"
 sleep 2
 echo "Creating extended volume"
-sudo parted -s -acylinder /dev/sda mkpart extended 18633 100% || failed "mkpart sda3"
+sudo parted -s -acylinder /dev/$BOOT_DISK mkpart extended 18633 100% || failed "mkpart ${BOOT_DISK}3"
 sleep 1
 echo "Creating tmp volume"
-sudo parted -s -acylinder /dev/sda mkpart logical 18633 26825 || failed "mkpart sda5"
+sudo parted -s -acylinder /dev/$BOOT_DISK mkpart logical 18633 26825 || failed "mkpart ${BOOT_DISK}5"
 sleep 1
 echo "Creating vartmp volume"
-sudo parted -s -acylinder /dev/sda mkpart logical 26825 35017 || failed "mkpart sda6"
+sudo parted -s -acylinder /dev/$BOOT_DISK mkpart logical 26825 35017 || failed "mkpart ${BOOT_DISK}6"
 sleep 1
 echo "Creating var volume"
-sudo parted -s -acylinder /dev/sda mkpart logical 35017 45497 || failed "mkpart sda7"
+sudo parted -s -acylinder /dev/$BOOT_DISK mkpart logical 35017 45497 || failed "mkpart ${BOOT_DISK}7"
 sleep 1
 
 echo "Creating root volume"
-sudo mkfs.xfs -f -d su=64k,sw=1 /dev/sda1 || failed "mkfs.xfs sda1"
+sudo mkfs.xfs -f -d su=64k,sw=1 /dev/${BOOT_DISK}1 || failed "mkfs.xfs ${BOOT_DISK}1"
 echo "Creating tmp volume"
-sudo mkfs.xfs -f -d su=64k,sw=1 /dev/sda5 || failed "mkfs.xfs sda5"
+sudo mkfs.xfs -f -d su=64k,sw=1 /dev/${BOOT_DISK}5 || failed "mkfs.xfs ${BOOT_DISK5}"
 echo "Creating vartmp volume"
-sudo mkfs.xfs -f -d su=64k,sw=1 /dev/sda6 || failed "mkfs.xfs sda6"
+sudo mkfs.xfs -f -d su=64k,sw=1 /dev/${BOOT_DISK}6 || failed "mkfs.xfs ${BOOT_DISK}6"
 echo "Creating var volume"
-sudo mkfs.xfs -f -d su=64k,sw=1 /dev/sda7 || failed "mkfs.xfs sda7"
+sudo mkfs.xfs -f -d su=64k,sw=1 /dev/${BOOT_DISK}7 || failed "mkfs.xfs ${BOOT_DISK}7"

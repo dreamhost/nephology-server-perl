@@ -10,12 +10,17 @@ failed()
   exit 1;
 }
 
+BOOT_DISK="sda"
+if [ -b "/dev/vda" ]; then
+  BOOT_DISK="vda"
+fi
+
 mkdir /target
-mount /dev/sda1 /target -t xfs
+mount /dev/${BOOT_DISK}1 /target -t xfs
 mkdir /target/var /target/tmp /target/var/tmp
-mount /dev/sda5 /target/tmp -t xfs
-mount /dev/sda6 /target/var/tmp -t xfs
-mount /dev/sda7 /target/var -t xfs
+mount /dev/${BOOT_DISK}5 /target/tmp -t xfs
+mount /dev/${BOOT_DISK}6 /target/var/tmp -t xfs
+mount /dev/${BOOT_DISK}7 /target/var -t xfs
 
 cat > /etc/resolv.conf <<EOF
 nameserver 8.8.8.8
@@ -41,11 +46,11 @@ cat > /target/etc/fstab <<EOF
 #
 # <file system> <mount point>   <type>  <options>                               <dump>  <pass>
 proc            /proc           proc    nodev,noexec,nosuid                     0       0
-/dev/sda1       /               xfs     defaults,noatime                        0       1
-/dev/sda2       swap            swap    defaults                                0       0
-/dev/sda5       /tmp            xfs     defaults,noatime,nodev,nosuid,noexec    0       1
-/dev/sda6       /var/tmp        xfs     defaults,noatime,nodev,nosuid           0       1
-/dev/sda7       /var        xfs     defaults,noatime,nodev,nosuid           0       1
+/dev/${BOOT_DISK}1       /               xfs     defaults,noatime                        0       1
+/dev/${BOOT_DISK}2       swap            swap    defaults                                0       0
+/dev/${BOOT_DISK}5       /tmp            xfs     defaults,noatime,nodev,nosuid,noexec    0       1
+/dev/${BOOT_DISK}6       /var/tmp        xfs     defaults,noatime,nodev,nosuid           0       1
+/dev/${BOOT_DISK}7       /var        xfs     defaults,noatime,nodev,nosuid           0       1
 EOF
 
 # Set the hostname
@@ -94,7 +99,7 @@ sudo locale-gen en_US.UTF-8
 
 # setup grup
 update-grub
-grub-install /dev/sda
+grub-install /dev/${BOOT_DISK}
 EOF
 
 echo "running install.sh"
