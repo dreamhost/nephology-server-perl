@@ -22,7 +22,7 @@ sub set_rule {
 	my $rule = $self->stash("rule");
 
 	my $Config = NephologyServer::Config::config($self);
-        my $Node = NephologyServer::Validate::validate($self,$boot_mac);
+	my $Node = NephologyServer::Validate::validate($self,$boot_mac);
 
         if($Node == '0') {
                 return $self->render(
@@ -179,17 +179,13 @@ sub discovery {
 	my $json = $self->req->body;
 	my $ohai = decode_json($json);
 
-	open (OHAI, ">>$Config->{'discovery_path'}/$boot_mac");
-	print OHAI $json;
-	close (OHAI);
-
 	my $NodeObject = Node->new(
 		ctime => time,
 		mtime => time,
 		asset_tag => '',
 		caste_id => '0',
-		status_id => '1000',
-		domain => '',
+		status_id => $Config->{'default_node_status'},
+		domain => $Config->{'default_domain'},
 		primary_ip => '',
 		hostname => '',
 		boot_mac => $boot_mac,

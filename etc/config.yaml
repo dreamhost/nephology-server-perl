@@ -9,3 +9,5 @@ db_password:
 db_type: mysql
 db_host: localhost
 discovery: enable
+default_domain: local.domain
+default_node_status: 1000
