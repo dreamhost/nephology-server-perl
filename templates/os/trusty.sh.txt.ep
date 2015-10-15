@@ -55,11 +55,27 @@ EOF
 
 # Set the hostname
 echo "Setup hostname and DNS..."
-#echo <%= $db_node_info->{'hostname'} %> > /target/etc/hostname
+<% if (stash->{'db_node_info'}->{'hostname'}) { %>
+echo <%= $db_node_info->{'hostname'} %> > /target/etc/hostname
+<% } else { %>
+echo <%= $db_node_info->{'boot_mac'} %> > /target/etc/hostname
+sed -i 's/:/-/g' /etc/hostname
+<% } %>
+
 if [ -L /target/etc/resolv.conf ]; then rm /target/etc/resolv.conf; fi
-printf "domain <%= $db_node_info->{'domain'} %>\nsearch <%= $db_node_info->{'domain'} %>\nnameserver 8.8.8.8\nnameserver 8.8.4.4\n" > /target/etc/resolv.conf            
-printf "<%= $db_node_info->{'primary_ip'} %> <%= $db_node_info->{'hostname'} %>.<%= $db_node_info->{'domain'} %> <%= $db_node_info->{'hostname'} %>\n" >> /target/etc/hosts
-echo "Done!"
+
+cat > /target/etc/hosts <<EOF
+127.0.0.1       localhost
+::1     localhost ip6-localhost ip6-loopback
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+<%= $db_node_info->{'primary_ip'} %>  <%= $db_node_info->{'hostname'} %>.<%= $db_node_info->{'domain'} %>  <%= $db_node_info->{'hostname'} %>
+EOF
+
+cat > /etc/resolv.conf <<EOF
+search <%= $db_node_info->{'domain'} %>
+nameserver 8.8.8.8
+EOF
 
 # Setup Ubuntu repos
 echo "Installing sources.list"
