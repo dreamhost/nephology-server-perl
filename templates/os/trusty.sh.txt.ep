@@ -74,12 +74,25 @@ iface eth0 inet dhcp
 EOF
 
 cat > /target/tmp/install.sh <<EOF
+#create bootstrap user and unset root's password
+passwd -d root
+useradd -m bootstrap -d /home/bootstrap -s /bin/bash -G sudo
+mkdir /home/bootstrap/.ssh
+sed -i '/\%sudo/c\%sudo\tALL=(ALL) NOPASSWD:ALL' /etc/sudoers
+
+# set hostname
 hostname <%= $db_node_info->{'hostname'} %>
+
+# upgrade packages
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get -fy upgrade
+
+# set mounts and fix locales
 grep -v rootfs /proc/mounts > /etc/mtab
 sudo locale-gen en_US.UTF-8
+
+# setup grup
 update-grub
 grub-install /dev/sda
 EOF
@@ -87,11 +100,8 @@ EOF
 echo "running install.sh"
 chroot /target /bin/bash /tmp/install.sh
 
-echo "Setup ssh key"
-if [ ! -d "/target/root/.ssh" ]; then
-        mkdir /target/root/.ssh
-fi
-cat > /target/root/.ssh/authorized_keys <<EOF
+echo "install ssh key for bootstrap user"
+cat > /target/home/bootstrap/.ssh/authorized_keys <<EOF
 <%= $pub_ssh_key %>
 EOF
 
