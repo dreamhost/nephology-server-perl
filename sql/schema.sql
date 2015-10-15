@@ -152,7 +152,7 @@ CREATE TABLE `node_status` (
 
 LOCK TABLES `node_status` WRITE;
 /*!40000 ALTER TABLE `node_status` DISABLE KEYS */;
-INSERT INTO `node_status` VALUES ('2015-09-28 21:34:54','2015-09-28 21:34:54',1,'bootstrap.ipxe',1000),('2015-09-28 21:35:08','2015-09-28 21:35:08',1000,'localboot.ipxe',NULL),('2015-09-28 21:35:58','2015-09-28 21:35:58',2000,'rescue.ipxe',NULL);
+INSERT INTO `node_status` VALUES ('2015-09-28 21:34:54','2015-09-28 21:34:54',1,'boot/bootstrap.ipxe',1000),('2015-09-28 21:35:08','2015-09-28 21:35:08',1000,'boot/localboot.ipxe',NULL),('2015-09-28 21:35:58','2015-09-28 21:35:58',2000,'boot/rescue.ipxe',NULL);
 /*!40000 ALTER TABLE `node_status` ENABLE KEYS */;
 UNLOCK TABLES;
 
