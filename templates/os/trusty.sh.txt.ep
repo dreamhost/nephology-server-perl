@@ -76,8 +76,9 @@ EOF
 cat > /target/tmp/install.sh <<EOF
 #create bootstrap user and unset root's password
 passwd -d root
-useradd -m bootstrap -d /home/bootstrap -s /bin/bash
+useradd -m bootstrap -d /home/bootstrap -s /bin/bash -G sudo
 mkdir /home/bootstrap/.ssh
+sed -i '/\%sudo/c\%sudo\tALL=(ALL) NOPASSWD:ALL' /etc/sudoers
 
 # set hostname
 hostname <%= $db_node_info->{'hostname'} %>
