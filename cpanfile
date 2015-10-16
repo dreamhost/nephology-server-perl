@@ -1,4 +1,4 @@
-requires 'Mojolicious', '== 2.23';
+requires 'Mojolicious';
 requires 'Rose';
 requires 'YAML';
 requires 'DBD::mysql';
