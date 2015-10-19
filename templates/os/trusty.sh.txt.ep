@@ -10,32 +10,37 @@ failed()
   exit 1;
 }
 
-BOOT_DISK="sda"
-if [ -b "/dev/vda" ]; then
-  BOOT_DISK="vda"
-fi
+# import nephologyrc
+source /tmp/nephologyrc
 
+# set defaults
+BOOT_DISK="${BOOT_DISK:-/dev/sda}"
+RAID_DISKS="${RAID_DISKS:-$BOOT_DISK}"
+PART_PREFIX="${PART_PREFIX:-}"
 IP="<%= $db_node_info->{'primary_ip'} %>"
 DOMAIN="<%= $domain %>"
 
-echo "Setup hostname and DNS..."
+# set hostname to mac address unless exists
 <% if (stash->{'db_node_info'}->{'hostname'}) { %>
 HOSTNAME=<%= $db_node_info->{'hostname'} %>
 <% } else { %>
 HOSTNAME=$(echo  <%= $db_node_info->{'boot_mac'} %> |sed 's/:/-/g')
 <% } %>
 
+# check for vda and use it
+if [ -b "/dev/vda" ]; then
+  BOOT_DISK="/dev/vda"
+fi
 
+# create target and mount boot disk
 mkdir /target
-mount /dev/${BOOT_DISK}1 /target -t xfs
-mkdir /target/var /target/tmp /target/var/tmp
-mount /dev/${BOOT_DISK}5 /target/tmp -t xfs
-mount /dev/${BOOT_DISK}6 /target/var/tmp -t xfs
-mount /dev/${BOOT_DISK}7 /target/var -t xfs
+mount ${BOOT_DISK}${PART_PREFIX}1 /target -t xfs
+mkdir /target/var
+mount ${BOOT_DISK}${PART_PREFIX}3 /target/var -t xfs
 
 echo "Starting debootstrap"
-INCLUDE_PACKAGES="openssh-server,linux-image-generic,xfsprogs,wget,ifenslave,curl,grub-pc"
-sudo debootstrap --include=$INCLUDE_PACKAGES --arch=amd64 trusty /target http://<%= $srv_addr %>:3142/<%= $mirror_addr %>/ubuntu/ || failed "Unable to debootstrap"
+INCLUDE_PACKAGES="openssh-server,linux-image-generic,xfsprogs,wget,ifenslave,curl,grub-pc,mdadm"
+debootstrap --include=$INCLUDE_PACKAGES --arch=amd64 trusty /target http://<%= $srv_addr %>:3142/<%= $mirror_addr %>/ubuntu/ || failed "Unable to debootstrap"
 
 mount -o bind /proc /target/proc
 mount -o bind /dev /target/dev
@@ -52,12 +57,14 @@ cat > /target/etc/fstab <<EOF
 #
 # <file system> <mount point>   <type>  <options>                               <dump>  <pass>
 proc            /proc           proc    nodev,noexec,nosuid                     0       0
-/dev/${BOOT_DISK}1       /               xfs     defaults,noatime                        0       1
-/dev/${BOOT_DISK}2       swap            swap    defaults                                0       0
-/dev/${BOOT_DISK}5       /tmp            xfs     defaults,noatime,nodev,nosuid,noexec    0       1
-/dev/${BOOT_DISK}6       /var/tmp        xfs     defaults,noatime,nodev,nosuid           0       1
-/dev/${BOOT_DISK}7       /var        xfs     defaults,noatime,nodev,nosuid           0       1
+${BOOT_DISK}${PART_PREFIX}1       /               xfs     defaults,noatime                        0       0
+${BOOT_DISK}${PART_PREFIX}2       swap            swap    defaults                                0       0
+${BOOT_DISK}${PART_PREFIX}3       /var        xfs     defaults,noatime,nodev,nosuid           0       0
 EOF
+
+if [ -e "/tmp/mdadm.conf" ]; then
+	cp /tmp/mdadm.conf /target/etc/mdadm/
+fi
 
 # Set the hostname
 echo "Setup hostname and DNS..."
@@ -98,6 +105,14 @@ iface eth0 inet dhcp
 EOF
 
 cat > /target/tmp/install.sh <<EOF
+# set mounts and fix locales
+grep -v rootfs /proc/mounts > /etc/mtab
+locale-gen en_US.UTF-8
+
+# make grub work with raid
+# https://bugs.launchpad.net/ubuntu/+source/grub2/+bug/1274320
+sed -i 's/quick_boot="1"/quick_boot="0"/g' /etc/grub.d/00_header
+
 #create bootstrap user and unset root's password
 passwd -d root
 useradd -m bootstrap -d /home/bootstrap -s /bin/bash -G sudo
@@ -109,13 +124,12 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get -fy upgrade
 
-# set mounts and fix locales
-grep -v rootfs /proc/mounts > /etc/mtab
-sudo locale-gen en_US.UTF-8
-
 # setup grup
 update-grub
-grub-install /dev/${BOOT_DISK}
+# install grub
+for disk in ${RAID_DISKS}; do
+	grub-install \$disk || (echo "failed to install grub on \$disk" ; exit 1)
+done
 EOF
 
 echo "running install.sh"

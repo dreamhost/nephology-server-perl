@@ -1,0 +1,63 @@
+#!/bin/bash
+
+
+D_PREFIX="/dev/sd"
+
+if [ -b "/dev/vda" ]; then
+	D_PREFIX="/dev/vda"
+fi
+
+RAID_DISKS="${D_PREFIX}a ${D_PREFIX}b"
+RAID="/dev/md0"
+SLEEP="sleep 2"
+
+echo "Clear existing raid config"
+if [ -b $RAID ]; then
+	mdadm --stop $RAID
+	$SLEEP
+fi
+
+for DISK in $RAID_DISKS ; do
+	if [ ! -b "$DISK" ]; then
+		echo "$DISK does not exist"
+	       	exit 1
+	fi
+
+        echo "Removing existing paritions on $DISK"
+        for v_partition in $(parted -s $DISK print | egrep 'primary|extended' | awk '/^ / {print $1}'); do
+        	parted -s $DISK rm ${v_partition}
+        done
+
+	mdadm --zero-superblock $DISK
+	dd if=/dev/zero of=$DISK bs=1M count=100
+done
+
+
+mdadm  -Cv $RAID --metadata=0.90 -f -l1 -n2 $D_PREFIX[ab]
+echo "Making msdos label on $RAID"
+parted -s -acylinder $RAID  mklabel msdos || failed "mklabel $@"
+$SLEEP
+echo "Creating root volume"
+parted -s -acylinder $RAID mkpart primary 1 20441 || failed "mkpart $@"
+$SLEEP
+echo "Creating swap volume"
+parted -s -acylinder $RAID mkpart primary 20441 28633 || failed "mkpart $@"
+$SLEEP
+echo "Creating var volume"
+parted -s -acylinder $RAID mkpart primary 28633 100% || failed "mkpart $@"
+
+
+echo "Format root volume"
+mkfs.xfs -f -d su=64k,sw=1 ${RAID}p1 || failed "mkfs.xfs $@"
+echo "Format var volume"
+mkfs.xfs -f -d su=64k,sw=1 ${RAID}p3 || failed "mkfs.xfs $@"
+echo "Make swap"
+mkswap ${RAID}p2 || failed "mkswap $@"
+
+mdadm --examine --scan >> /tmp/mdadm.conf
+
+cat >> /tmp/nephologyrc <<EOF
+BOOT_DISK=$RAID
+PART_PREFIX=p
+RAID_DISKS="$RAID_DISKS"
+EOF

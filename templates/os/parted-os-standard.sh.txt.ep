@@ -1,4 +1,4 @@
-#!/bin/bash
+	!/bin/bash
 
 failed()
 {
@@ -26,31 +26,18 @@ echo "Making msdos label on $BOOT_DISK"
 sudo parted -s -acylinder /dev/$BOOT_DISK mklabel msdos || failed "mklabel $BOOT_DISK"
 sleep 2
 echo "Creating root volume"
-sudo parted -s -acylinder /dev/$BOOT_DISK mkpart primary 1 10441 || failed "mkpart $BOOT_DISK1"
+sudo parted -s -acylinder /dev/$BOOT_DISK mkpart primary 1 20441 || failed "mkpart ${BOOT_DISK}1"
 sleep 2
 echo "Creating swap volume"
-sudo parted -s -acylinder /dev/$BOOT_DISK mkpart primary 10441 18633 || failed "mkpart $BOOT_DISK2"
-sleep 1
-sudo mkswap /dev/${BOOT_DISK}2 || failed "mkswap ${BOOT_DISK}2"
-sleep 2
-echo "Creating extended volume"
-sudo parted -s -acylinder /dev/$BOOT_DISK mkpart extended 18633 100% || failed "mkpart ${BOOT_DISK}3"
-sleep 1
-echo "Creating tmp volume"
-sudo parted -s -acylinder /dev/$BOOT_DISK mkpart logical 18633 26825 || failed "mkpart ${BOOT_DISK}5"
-sleep 1
-echo "Creating vartmp volume"
-sudo parted -s -acylinder /dev/$BOOT_DISK mkpart logical 26825 35017 || failed "mkpart ${BOOT_DISK}6"
+sudo parted -s -acylinder /dev/$BOOT_DISK mkpart primary 20441 28633 || failed "mkpart ${BOOT_DISK}2"
 sleep 1
 echo "Creating var volume"
-sudo parted -s -acylinder /dev/$BOOT_DISK mkpart logical 35017 45497 || failed "mkpart ${BOOT_DISK}7"
+sudo parted -s -acylinder /dev/$BOOT_DISK mkpart primary 28633 100% || failed "mkpart ${BOOT_DISK}3"
 sleep 1
 
 echo "Creating root volume"
 sudo mkfs.xfs -f -d su=64k,sw=1 /dev/${BOOT_DISK}1 || failed "mkfs.xfs ${BOOT_DISK}1"
-echo "Creating tmp volume"
-sudo mkfs.xfs -f -d su=64k,sw=1 /dev/${BOOT_DISK}5 || failed "mkfs.xfs ${BOOT_DISK5}"
-echo "Creating vartmp volume"
-sudo mkfs.xfs -f -d su=64k,sw=1 /dev/${BOOT_DISK}6 || failed "mkfs.xfs ${BOOT_DISK}6"
 echo "Creating var volume"
-sudo mkfs.xfs -f -d su=64k,sw=1 /dev/${BOOT_DISK}7 || failed "mkfs.xfs ${BOOT_DISK}7"
+sudo mkfs.xfs -f -d su=64k,sw=1 /dev/${BOOT_DISK}3 || failed "mkfs.xfs ${BOOT_DISK}3"
+echo "Creating swap"
+sudo mkswap /dev/${BOOT_DISK}2 || failed "mkswap ${BOOT_DISK}2"
